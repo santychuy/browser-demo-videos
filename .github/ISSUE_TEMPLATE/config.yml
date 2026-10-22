@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Report a security vulnerability privately
+    url: https://github.com/santychuy/browser-demo-videos/security/advisories/new
+    about: Read SECURITY.md first. Never post secrets or vulnerabilities in a public issue.

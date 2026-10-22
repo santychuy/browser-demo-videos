@@ -1,0 +1,35 @@
+name: Bug report
+description: Report a reproducible problem with setup, recording, or the bundled sample.
+body:
+  - type: markdown
+    attributes:
+      value: |
+        For vulnerabilities, use private reporting linked in SECURITY.md, not a public issue.
+        Do not include API keys, credentials, browser profiles, private URLs, raw recordings, or unredacted logs.
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      description: OS and architecture, Node version, agent host, and skill version or commit.
+      placeholder: macOS / arm64, Node 24.x, Codex, v0.1.0
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      description: Include the command or agent request and a minimal synthetic plan, if relevant.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected and actual behavior
+      description: Explain what happened and what you expected instead.
+    validations:
+      required: true
+  - type: textarea
+    id: diagnostics
+    attributes:
+      label: Sanitized diagnostics
+      description: Optional error excerpt or doctor summary. Review and redact it before posting; do not attach private output directories.

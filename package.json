@@ -1,0 +1,45 @@
+{
+  "name": "browser-demo-videos",
+  "version": "0.1.0",
+  "private": true,
+  "description": "A self-contained agent skill for recording polished browser demo videos with captions and optional narration.",
+  "type": "module",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/santychuy/browser-demo-videos.git"
+  },
+  "homepage": "https://github.com/santychuy/browser-demo-videos#readme",
+  "bugs": {
+    "url": "https://github.com/santychuy/browser-demo-videos/issues"
+  },
+  "engines": {
+    "node": ">=24"
+  },
+  "bin": {
+    "browser-demo": "skills/browser-demo-videos/scripts/cli.mjs"
+  },
+  "files": [
+    "skills/browser-demo-videos",
+    "docs",
+    "README.md",
+    "CONTRIBUTING.md",
+    "SECURITY.md",
+    "CHANGELOG.md",
+    ".env.example",
+    "LICENSE",
+    "assets/demo-preview.gif"
+  ],
+  "scripts": {
+    "check": "node scripts/check.mjs",
+    "test": "node --test",
+    "format": "prettier --write --ignore-path .gitignore .",
+    "format:check": "prettier --check --ignore-path .gitignore .",
+    "package:skill": "python3 scripts/package-skill.py",
+    "demo:serve": "node skills/browser-demo-videos/assets/demo/server.mjs",
+    "demo": "node skills/browser-demo-videos/scripts/cli.mjs demo --session browser-demo-example --output demo-output"
+  },
+  "devDependencies": {
+    "prettier": "3.6.2"
+  }
+}

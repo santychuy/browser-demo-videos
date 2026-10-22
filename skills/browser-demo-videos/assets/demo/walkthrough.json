@@ -1,0 +1,63 @@
+{
+  "version": 1,
+  "title": "Turn a busy workspace into a focused handoff",
+  "url": "http://127.0.0.1:4173/",
+  "viewport": { "width": 1280, "height": 720 },
+  "narration": { "provider": "none" },
+  "scenes": [
+    {
+      "id": "overview",
+      "title": "Start with the whole picture",
+      "text": "Six projects, one workspace. Three need your attention.",
+      "narration": "Six projects, one workspace. Three need your attention.",
+      "target": "#workspace-summary",
+      "placement": "below",
+      "spotlight": true,
+      "holdMs": 2800,
+      "waitFor": {
+        "selector": "#projects[data-view='all'] #project-count[data-count='6']"
+      }
+    },
+    {
+      "id": "filter",
+      "title": "Find the work that needs you",
+      "text": "One filter narrows the list to three projects needing a decision or a helping hand.",
+      "narration": "One filter narrows the list to three projects needing a decision or a helping hand.",
+      "target": "#projects",
+      "placement": "below",
+      "spotlight": true,
+      "holdMs": 3500,
+      "actions": [{ "type": "click", "selector": "#attention-filter" }],
+      "waitFor": {
+        "selector": "#projects[data-view='attention'] #project-count[data-count='3']"
+      }
+    },
+    {
+      "id": "export",
+      "title": "Export exactly this view",
+      "text": "Export opens a new page with only the three selected projects—not the whole workspace.",
+      "narration": "Export opens a new page with only the three selected projects, not the whole workspace.",
+      "target": "#export-summary",
+      "placement": "below",
+      "spotlight": true,
+      "holdMs": 3500,
+      "actions": [{ "type": "click", "selector": "#export-projects" }],
+      "waitFor": {
+        "selector": "#export-summary[data-export-count='3'][data-view='attention']"
+      }
+    },
+    {
+      "id": "value",
+      "title": "A handoff with useful context",
+      "text": "Share a focused summary: three projects, 96 planned hours, and a $14,200 budget.",
+      "narration": "Share a focused summary: three projects, ninety six planned hours, and a fourteen thousand two hundred dollar budget.",
+      "target": "#export-details",
+      "placement": "below",
+      "spotlight": true,
+      "holdMs": 3500,
+      "waitFor": {
+        "selector": "#export-results tbody tr[data-attention='true']"
+      }
+    }
+  ]
+}
