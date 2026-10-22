@@ -2,6 +2,16 @@
 
 Start with the [README](../README.md) for installation and natural-language requests. This guide is for manual operation, troubleshooting, and understanding the output. The [installed skill](../skills/browser-demo-videos/SKILL.md) supplies the agent workflow; the [plan reference](../skills/browser-demo-videos/references/plan-format.md) defines exact fields, bounds, voices, and action shapes.
 
+## Non-interactive installation
+
+For agent or CI tooling, select the target host explicitly and skip installer prompts:
+
+```sh
+npx --yes skills add santychuy/browser-demo-videos --skill browser-demo-videos --agent codex --copy --yes
+```
+
+This is the README installation with automation flags; it still installs project-locally. Replace `codex` with your [host's skills identifier](https://github.com/vercel-labs/skills/blob/main/docs/agents.md). `--copy` carries the complete skill without checkout links. Installer `--yes` does not authorize paid narration or privileged system changes.
+
 ## Locate the installed CLI
 
 The skill includes its runtime and sample. No repository checkout, npm-registry companion package, `npm link`, or global `browser-demo` command is required.

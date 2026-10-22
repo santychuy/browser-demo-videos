@@ -16,13 +16,9 @@ Select your agent in the installer. If it does not discover the new skill immedi
 
 **Try the bundled sample — no app URL, API key, or repository checkout needed:**
 
-> Use browser-demo-videos to make the bundled sample demo with captions only. Check and repair ordinary dependencies within my permissions, record into a fresh local output directory, and review the actual video and scene screenshots. Give me the MP4, plan, and manifest paths, and say which review checks you performed. Do not use cloud narration or API keys.
+> Use browser-demo-videos to make the bundled sample demo.
 
-**Then try your own app** (replace the URL and feature):
-
-> Use browser-demo-videos to make a short demo of https://my-app.example showing how to filter projects and export the result. Inspect the real app, plan and rehearse the flow, then record with captions only. Use a task-specific browser session and a demo account; ask before destructive actions. Review the result and deliver the MP4, plan, and manifest paths.
-
-The skill includes its CLI and sample app. Your agent locates them from the installed skill, checks dependencies, and repairs ordinary missing dependencies within your permissions. First use downloads the pinned browser tooling and Chromium; recording also needs FFmpeg/ffprobe. System-package changes may require your explicit permission or a manual repair. You do **not** need a separate npm package or CLI install. Setup does not bootstrap Node before that initial `npx` command.
+The skill bundles its CLI and sample app. Your agent prepares browser and media tooling within your permissions—no clone or separate CLI installation. System-package changes may require approval.
 
 ## See the result
 
@@ -32,7 +28,13 @@ The skill includes its CLI and sample app. Your agent locates them from the inst
 
 The bundled Northstar app uses synthetic project data. Its walkthrough shows the project list, applies an attention filter, proves the narrowed result, and navigates to the export summary. The `demo` command starts and stops its own loopback-only server.
 
+**Then try your own app** (replace the URL and feature):
+
+> Use browser-demo-videos to demo the filter and export flow at https://my-app.example.
+
 ## What to expect
+
+First use checks the pinned browser tooling, Chromium, and FFmpeg/ffprobe, and downloads missing dependencies when permitted. Node.js and Git must already be available for the initial installation command.
 
 - **Actual interactions:** one explicit `agent-browser` session operates the page. No application-source changes or fabricated results.
 - **Reviewable output:** final and raw MP4s, scene screenshots, timeline, and complete-run manifest. The agent retains the input plan and reports observed review, not just command success.
