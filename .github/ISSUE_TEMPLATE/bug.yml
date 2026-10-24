@@ -10,8 +10,8 @@ body:
     id: environment
     attributes:
       label: Environment
-      description: OS and architecture, Node version, agent host, and skill version or commit.
-      placeholder: macOS / arm64, Node 24.x, Codex, v0.1.0
+      description: OS and architecture, Bun version, upstream Node version, agent host, and skill version or commit.
+      placeholder: macOS / arm64, Bun 1.4.4, Node 24.x, Codex, v0.1.0
     validations:
       required: true
   - type: textarea

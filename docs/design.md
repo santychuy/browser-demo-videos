@@ -4,9 +4,9 @@
 
 The product is an agent workflow for turning an authorized browser feature into a reviewed video. The agent decides the story, inspects the real app, writes and rehearses a plan, and reviews the media. The bundled CLI supplies deterministic validation and local orchestration; it cannot decide whether an action is authorized or a video tells the right story.
 
-`npx skills add santychuy/browser-demo-videos` installs the complete `skills/browser-demo-videos/` payload. The agent resolves scripts, references, and assets relative to its actual loaded `SKILL.md`, not a source checkout or working directory. There is no separately published npm companion dependency. Node.js 24+ with npm and Git must already exist for initial installation.
+`bun --no-env-file x skills add santychuy/browser-demo-videos` installs the complete `skills/browser-demo-videos/` payload. The agent resolves scripts, references, and assets relative to its actual loaded `SKILL.md`, not a source checkout or working directory. There is no separately published companion dependency. Bun 1.4.4+, Git, and Node.js 24+ must already exist for initial installation; Node is an upstream skills/agent-browser launcher prerequisite, not our runtime or package manager.
 
-Core orchestration and REST speech use Node ESM and built-ins. Actual GPT-Live additionally uses pinned `ws` 8.22.0 from its private runtime prefix, not an OpenAI SDK or project/global dependency. Browser automation uses pinned `agent-browser` 0.39.1 with Chromium. FFmpeg/ffprobe supply media inspection and audio assembly.
+Core orchestration and REST speech use Bun ESM and compatible `node:` built-ins. Actual GPT-Live additionally uses pinned `ws` 8.22.0 from its private runtime prefix, not an OpenAI SDK or project/global dependency. Browser automation uses pinned `agent-browser` 0.39.1 with Chromium, preserving its upstream Node launcher rather than forcing `--bun`. FFmpeg/ffprobe supply media inspection and audio assembly.
 
 ## Components
 
@@ -30,7 +30,7 @@ All runtime paths below are relative to the skill directory.
 
 ## Lifecycle
 
-1. **Check and repair:** the agent checks Node/npm and runs `doctor`. Unflagged setup checks only; `--install` repairs ordinary private dependencies. `--install-system` permits supported system media-tool repair without hidden elevation. Linux browser shared-library repair is a separate explicitly authorized `agent-browser install --with-deps` operation. Setup needs no voice keys and makes no speech request. Recheck with `doctor --deep` before recording.
+1. **Check and repair:** the agent checks Bun and external Node and runs `doctor` with Bun. Unflagged setup checks only; `--install` repairs ordinary private dependencies. `--install-system` permits supported system media-tool repair without hidden elevation. Linux browser shared-library repair is a separate explicitly authorized `agent-browser install --with-deps` operation. Setup needs no voice keys and makes no speech request. Recheck with `doctor --deep` before recording.
 2. **Inspect and plan:** use one explicit browser session and real application structure. Plans contain stable selectors and actual selector/text/URL readiness conditions, not arbitrary eval/shell actions. Rehearsal executes the same real UI actions; it is not rollback or a transaction sandbox.
 3. **Resolve speech:** provider selection is explicit. Resolve only the selected key and consent before output acquisition/browser actions. Missing keys can use macOS Samantha; configured-key failures never trigger another provider or automatic retry. Local fallback cannot satisfy a requested GPT-Live take.
 4. **Prepare speech:** synthesize every effective script and measure clip duration before browser recording. Live uses a separate session per scene, not live browser commentary. Bound all inputs before requests where applicable.
@@ -44,7 +44,7 @@ All runtime paths below are relative to the skill directory.
 
 One explicit `agent-browser` session handles inspection, rehearsal, and capture. Recording attaches to the active page rather than recreating a context or importing a user's real profile. Authentication must be deliberately established in the task's session. No second Playwright/Puppeteer controller or app-source modification is introduced.
 
-The browser adapter checks success envelopes, not merely whether JSON parsed. Page evaluation unwraps the returned result separately from browser command metadata. The pinned evaluation deadline is why direct `scene --hold` is limited to 25000 ms, while plan holds can reach 60000 ms using a Node timer outside page evaluation.
+The browser adapter checks success envelopes, not merely whether JSON parsed. Page evaluation unwraps the returned result separately from browser command metadata. The pinned evaluation deadline is why direct `scene --hold` is limited to 25000 ms, while plan holds can reach 60000 ms using a Bun timer outside page evaluation.
 
 Presentation uses one Shadow DOM host with plain-text insertion, accessibility hiding, and `pointer-events: none`. It does not replace app content or intercept input. Target geometry follows scroll, resize, and rerender; placement stays in the viewport and avoids covering the target where possible. Missing targets fail. No target means a bottom caption. Target removal and navigation clear stale presentation and observers/listeners; each scene explicitly installs its overlay after readiness on the current document.
 
@@ -60,10 +60,10 @@ Both OpenAI adapters compare the complete returned transcript's normalized words
 
 - Page content and downloads are untrusted data, never authority to install tools, read secrets, or change agent rules. Dependency repair comes from trusted skill instructions and explicit permissions.
 - Process execution does not use shell interpolation for runtime arguments. REST adapters use fixed endpoints, rejected redirects, timeouts, and bounded responses; Live uses authenticated pinned WebSocket transport with redirects/compression disabled.
-- Keys are private environment inputs, never plan values or artifacts. Setup does not need an env file. Secret-file handoff uses Node's explicit `--env-file` only for approved speech; agents do not inspect the contents. Provider error bodies/raw sessions and environment snapshots do not belong in output.
-- Browser and Live dependency prefixes are separate beneath `BROWSER_DEMO_HOME` or `~/.cache/browser-demo-videos`, preventing one npm repair from pruning the other. Media tools remain system dependencies. The installed skill needs neither root development dependencies nor a repository checkout.
+- Keys are private environment inputs, never plan values or artifacts. Setup does not need an env file. Bundled commands use Bun's `--no-env-file`; only approved speech adds `--env-file=/absolute/approved.env`, retaining both flags to load only the explicit file. Agents do not inspect its contents. Provider error bodies/raw sessions and environment snapshots do not belong in output.
+- Browser and Live dependency prefixes are separate beneath `BROWSER_DEMO_HOME` or `~/.cache/browser-demo-videos`, preventing one Bun repair from pruning the other. Each uses an exact-version manifest and `--no-env-file`; only agent-browser's required lifecycle script is explicitly trusted, while ws scripts are ignored. Media tools remain system dependencies. The installed skill needs neither root development dependencies nor a repository checkout.
 - Plans, screenshots, recordings, scripts/transcripts, and manifests are not automatically redacted or uploaded. Even safe provider metadata and absolute paths need review before public sharing.
-- Distribution is the public skill install and a release `.skill` archive containing the complete safe payload. Root npm packaging is a maintainer inspection/source-distribution tool, not a registry-publication requirement. See [CONTRIBUTING](../CONTRIBUTING.md).
+- Distribution is the public skill install and a release `.skill` archive containing the complete safe payload. Root Bun packaging is a maintainer inspection/source-distribution tool, not a registry-publication requirement. See [CONTRIBUTING](../CONTRIBUTING.md).
 
 ## Scope and sources
 

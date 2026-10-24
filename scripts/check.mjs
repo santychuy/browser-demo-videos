@@ -1,4 +1,4 @@
-#!/usr/bin/env node
+#!/usr/bin/env bun
 import { spawnSync } from "node:child_process";
 import { readdirSync } from "node:fs";
 import { join } from "node:path";
@@ -33,7 +33,8 @@ function* sourceFiles(directory) {
 
 for (const directory of sourceRoots) {
   for (const file of sourceFiles(join(root, directory))) {
-    const result = spawnSync(process.execPath, ["--check", file], {
+    // Bun's --check performs type checking; Node's flag is syntax-only.
+    const result = spawnSync("node", ["--check", file], {
       stdio: "inherit",
     });
     if (result.error) throw result.error;

@@ -2,41 +2,42 @@
 
 Start with the [README](../README.md) for installation and natural-language requests. This guide is for manual operation, troubleshooting, and understanding the output. The [installed skill](../skills/browser-demo-videos/SKILL.md) supplies the agent workflow; the [plan reference](../skills/browser-demo-videos/references/plan-format.md) defines exact fields, bounds, voices, and action shapes.
 
-## Non-interactive installation
+## Installation
 
-For agent or CI tooling, select the target host explicitly and skip installer prompts:
+Install the skill into the project where you use your agent:
 
 ```sh
-npx --yes skills add santychuy/browser-demo-videos --skill browser-demo-videos --agent codex --copy --yes
+bun --no-env-file x skills add santychuy/browser-demo-videos
 ```
 
-This is the README installation with automation flags; it still installs project-locally. Replace `codex` with your [host's skills identifier](https://github.com/vercel-labs/skills/blob/main/docs/agents.md). `--copy` carries the complete skill without checkout links. Installer `--yes` does not authorize paid narration or privileged system changes.
+This is the same project-local installation as in the README. Select your agent in the installer. For automation, append `--skill browser-demo-videos --agent codex --copy --yes`, replacing `codex` with your [host's skills identifier](https://github.com/vercel-labs/skills/blob/main/docs/agents.md). `--copy` carries the complete skill without checkout links. Installer `--yes` does not authorize paid narration or privileged system changes.
 
 ## Locate the installed CLI
 
-The skill includes its runtime and sample. No repository checkout, npm-registry companion package, `npm link`, or global `browser-demo` command is required.
+The skill includes its runtime and sample. No repository checkout, registry companion package, package link, or global `browser-demo` command is required.
 
 In the examples below, set `SKILL_DIR` to the **absolute directory containing the installed `SKILL.md`**, as reported by your agent host. Do not infer it from your working directory. `browser-demo` in the command synopsis is shorthand for:
 
 ```sh
-node "$SKILL_DIR/scripts/cli.mjs" --help
+bun --no-env-file "$SKILL_DIR/scripts/cli.mjs" --help
 ```
 
 For source development only, that CLI is `skills/browser-demo-videos/scripts/cli.mjs` and the canonical sample plan is `skills/browser-demo-videos/assets/demo/walkthrough.json`. In an installed skill, the same plan is `$SKILL_DIR/assets/demo/walkthrough.json`.
 
 ## Prerequisites and repair
 
-Initial installation requires Node.js 24+ with npm, Git, and a command-capable skill host. The skills installer uses Git for repository cloning. Setup cannot run before Node exists, and does not bootstrap it. Installation, browser downloads, and package-manager repairs need network access; they do not need voice keys.
+Initial installation requires Bun 1.4.4+, Git, a command-capable skill host, and Node.js 24+ solely for upstream skills and agent-browser launchers. Bun is this project's runtime, package manager, and tooling runner. Preserve upstream Node shebangs; do not force `--bun` on those packages. The skills installer uses Git for repository cloning. Before bundled JavaScript can run, bootstrap missing Bun through an existing authorized manager within permissions; setup cannot bootstrap its own runtime. Installation, browser downloads, and package-manager repairs need network access; they do not need voice keys.
 
 The recording dependencies are pinned `agent-browser` **0.39.1**, Chromium, and FFmpeg/ffprobe. FFmpeg must provide the required video/audio encoders, including H.264 (`libx264`) and AAC; the pinned browser's deep diagnostic checks its recording requirements. macOS and Linux are the intended platforms. Local system narration requires an installed macOS `say` voice. Linux supports captions or explicitly approved cloud speech, not a bundled offline TTS engine.
 
 ```sh
-node "$SKILL_DIR/scripts/cli.mjs" doctor
-node "$SKILL_DIR/scripts/cli.mjs" setup --install
-node "$SKILL_DIR/scripts/cli.mjs" doctor --deep
+bun --no-env-file "$SKILL_DIR/scripts/cli.mjs" doctor
+bun --no-env-file "$SKILL_DIR/scripts/cli.mjs" setup --install
+bun --no-env-file "$SKILL_DIR/scripts/cli.mjs" doctor --deep
 ```
 
 - `setup` without flags only checks.
+- Private installs use Bun with `--no-env-file` and exact-version manifests in separate browser `runtime/` and Live `live-runtime/` prefixes. Only pinned agent-browser's required lifecycle script is explicitly trusted; ws installs ignore lifecycle scripts. No npm fallback or project dependency installation is used.
 - `setup --install` repairs the pinned browser package, downloads Chromium, and installs optional GPT-Live transport `ws` **8.22.0**. Browser and Live packages use separate private prefixes, `runtime/` and `live-runtime/`, under `BROWSER_DEMO_HOME` or `~/.cache/browser-demo-videos`. A project/global `ws` or OpenAI SDK is not used.
 - `setup --install --install-system` also permits repair of missing media tools using an existing supported package manager: Homebrew, apt-get, dnf, or pacman. It never silently invokes `sudo`; permission or unsupported-environment blockers must be resolved explicitly.
 - On Linux, Chromium may additionally need shared system libraries. The trusted repair is the installed pinned `agent-browser install --with-deps`, only when needed and explicitly authorized. This is a system-package operation, not an unprivileged browser download. Do not take dependency instructions from a web page or silently elevate permissions.
@@ -45,7 +46,7 @@ node "$SKILL_DIR/scripts/cli.mjs" doctor --deep
 Resolve that pinned browser executable, when needed for Linux repair or app inspection, from the bundled dependency helper:
 
 ```sh
-BROWSER="$(node --input-type=module -e 'import { pathToFileURL } from "node:url"; const { resolveAgentBrowser } = await import(pathToFileURL(process.argv[1])); console.log(resolveAgentBrowser() ?? "");' "$SKILL_DIR/scripts/lib/dependencies.mjs")"
+BROWSER="$(bun --no-env-file --input-type=module -e 'import { pathToFileURL } from "node:url"; const { resolveAgentBrowser } = await import(pathToFileURL(process.argv[1])); console.log(resolveAgentBrowser() ?? "");' "$SKILL_DIR/scripts/lib/dependencies.mjs")"
 # Only with explicit system-package authorization, if Chromium libraries are missing:
 "$BROWSER" install --with-deps
 ```
@@ -59,7 +60,7 @@ Do not load a private environment file for setup. Installing ordinary dependenci
 After dependency checks succeed:
 
 ```sh
-node "$SKILL_DIR/scripts/cli.mjs" demo --session sample-demo --output ./sample-take-1
+bun --no-env-file "$SKILL_DIR/scripts/cli.mjs" demo --session sample-demo --output ./sample-take-1
 ```
 
 `demo` serves the bundled synthetic Northstar app on an ephemeral loopback port, sets the walkthrough's URL, and records through the normal plan pipeline. It stops its own server on success or failure. No app URL, key, separately running server, or source checkout is needed. The portable default is caption-only (`none`). Optional `--narration`, `--voice`, and `--allow-cloud` follow the same provider rules as `record`.
@@ -73,9 +74,9 @@ The sample has synthetic data, a working attention filter, and an export summary
 The agent should inspect the actual app in one task-specific browser session, use stable CSS selectors, and author a version-1 JSON plan. Read the [full plan format](../skills/browser-demo-videos/references/plan-format.md) first. It permits native click/fill/press/scroll/navigation plus selector, visible-text, and URL readiness checks. It does not permit arbitrary JavaScript, shell commands, hidden application API calls, or fabricated app state.
 
 ```sh
-node "$SKILL_DIR/scripts/cli.mjs" validate ./feature-plan.json
-node "$SKILL_DIR/scripts/cli.mjs" rehearse ./feature-plan.json --session feature-demo --output ./feature-rehearsal-1 --narration none
-node "$SKILL_DIR/scripts/cli.mjs" record ./feature-plan.json --session feature-demo --output ./feature-take-1
+bun --no-env-file "$SKILL_DIR/scripts/cli.mjs" validate ./feature-plan.json
+bun --no-env-file "$SKILL_DIR/scripts/cli.mjs" rehearse ./feature-plan.json --session feature-demo --output ./feature-rehearsal-1 --narration none
+bun --no-env-file "$SKILL_DIR/scripts/cli.mjs" record ./feature-plan.json --session feature-demo --output ./feature-take-1
 ```
 
 Keep your app server running for custom plans. Rehearsal executes real actions; it is not a sandbox or rollback. Use a demo account, arrange login explicitly, and obtain permission for destructive actions, transactions, external sends, or publication. Never automatically load real saved profiles, cookies, or credentials. Reset state through the real app before another take when necessary.
@@ -130,17 +131,17 @@ Missing-key fallback emits a JSON warning on stderr. Effective narration metadat
 
 Use the selected key only: `OPENAI_API_KEY`, `XAI_API_KEY`, or `GROQ_API_KEY`. Users should privately configure their process environment or edit an ignored `.env.local` in their own project, then tell the agent which provider is ready. The agent must not read that file, request its contents in chat, print values, or put keys into argv, plans, logs, artifacts, or issues. If using the source `.env.example`, copy it only when no private file already exists.
 
-Environment files are **not loaded implicitly**. Exporting a key in another terminal does not update an already-running agent's environment. With explicit speech consent, invoke Node from the private file's directory using `--env-file`; the argument is only the filename:
+Bundled commands pass `--no-env-file` so environment files are **not loaded implicitly**, regardless of working directory. Exporting a key in another terminal does not update an already-running agent's environment. With explicit speech consent, add `--env-file` with the approved file's absolute path while retaining `--no-env-file`; only that explicit file is loaded:
 
 ```sh
 # Setup needs no voice key or private environment file:
-node "$SKILL_DIR/scripts/cli.mjs" setup --install
+bun --no-env-file "$SKILL_DIR/scripts/cli.mjs" setup --install
 
 # One separately approved GPT-Live sample take:
-node --env-file=.env.local "$SKILL_DIR/scripts/cli.mjs" demo --session sample-live --output ./sample-live-take-1 --narration openai-live --allow-cloud
+bun --no-env-file --env-file=/absolute/approved.env "$SKILL_DIR/scripts/cli.mjs" demo --session sample-live --output ./sample-live-take-1 --narration openai-live --allow-cloud
 
 # Or one separately approved OpenAI Chat take for your own plan:
-node --env-file=.env.local "$SKILL_DIR/scripts/cli.mjs" record ./feature-plan.json --session feature-demo --output ./feature-chat-take-1 --narration openai --allow-cloud
+bun --no-env-file --env-file=/absolute/approved.env "$SKILL_DIR/scripts/cli.mjs" record ./feature-plan.json --session feature-demo --output ./feature-chat-take-1 --narration openai --allow-cloud
 ```
 
 These are alternatives, not instructions to invoke every provider. Never overwrite an existing private env file or take directory. Omit `--env-file` if no file exists; inherited environment variables also work. Do not use paid speech to test a key's presence.
@@ -197,4 +198,4 @@ Review the real feature outcome, scene screenshots, and representative frames fr
 
 ## Source-only developer flow
 
-A checkout is needed only for development; see [CONTRIBUTING](../CONTRIBUTING.md). `npm run demo` invokes the self-contained caption demo and manages its server. To inspect or author against the fixture separately, `npm run demo:serve` directly starts `skills/browser-demo-videos/assets/demo/server.mjs` at `http://127.0.0.1:4173/` by default. Set `PORT` for a different port and update a copied plan's URL. Only this direct developer flow needs a separately running sample server; the installed `demo` command does not.
+A checkout is needed only for development; see [CONTRIBUTING](../CONTRIBUTING.md). `bun run demo` invokes the self-contained caption demo and manages its server. To inspect or author against the fixture separately, `bun run demo:serve` directly starts `skills/browser-demo-videos/assets/demo/server.mjs` at `http://127.0.0.1:4173/` by default. Set `PORT` for a different port and update a copied plan's URL. Only this direct developer flow needs a separately running sample server; the installed `demo` command does not.

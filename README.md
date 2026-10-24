@@ -6,10 +6,10 @@ This skill records native browser clicks, typing, and navigation with readable c
 
 ## Install once, then ask
 
-You need a command-capable coding agent that supports skills, **Node.js 24+ with npm**, and **Git** before installing. Run this in the project where you use your agent:
+You need a command-capable coding agent that supports skills, **Bun 1.4.4+**, **Node.js 24+** (for upstream skills and browser launchers), and **Git** before installing. Bun runs this project's CLI and manages its packages. Run this in the project where you use your agent:
 
 ```sh
-npx skills add santychuy/browser-demo-videos
+bun --no-env-file x skills add santychuy/browser-demo-videos
 ```
 
 Select your agent in the installer. If it does not discover the new skill immediately, reload its skills or start a new agent session.
@@ -34,7 +34,7 @@ The bundled Northstar app uses synthetic project data. Its walkthrough shows the
 
 ## What to expect
 
-First use checks the pinned browser tooling, Chromium, and FFmpeg/ffprobe, and downloads missing dependencies when permitted. Node.js and Git must already be available for the initial installation command.
+First use checks the pinned browser tooling, Chromium, and FFmpeg/ffprobe, and downloads missing dependencies when permitted. Bun, the upstream Node.js launcher prerequisite, and Git must already be available for the initial installation command.
 
 - **Actual interactions:** one explicit `agent-browser` session operates the page. No application-source changes or fabricated results.
 - **Reviewable output:** final and raw MP4s, scene screenshots, timeline, and complete-run manifest. The agent retains the input plan and reports observed review, not just command success.
@@ -53,12 +53,13 @@ Recording takes time, especially on first setup or with speech generation. Timin
 - [Architecture and safety boundaries](docs/design.md)
 - [Contributing](CONTRIBUTING.md) · [Security](SECURITY.md) · [Changelog](CHANGELOG.md)
 
-## Related projects and inspiration
+## Tools used
 
-- [vercel-labs/skills](https://github.com/vercel-labs/skills) distributes skills; [vercel-labs/agent-skills](https://github.com/vercel-labs/agent-skills) demonstrates skill packaging and progressive guidance, following the [Agent Skills specification](https://agentskills.io/specification).
-- [vercel-labs/agent-browser](https://github.com/vercel-labs/agent-browser) is the browser controller used by this project.
-- [obra/superpowers](https://github.com/obra/superpowers) is an inspiration for explicit, review-oriented agent workflows.
-- [Remotion](https://github.com/remotion-dev/remotion) is a README presentation reference for showing the output early, not this project's rendering engine. That reference is not a claim of code reuse or shared licensing.
+- [Bun](https://bun.sh/)
+- [skills](https://github.com/vercel-labs/skills)
+- [agent-browser](https://github.com/vercel-labs/agent-browser)
+- [FFmpeg](https://ffmpeg.org/)
+- [Node.js](https://nodejs.org/)
 
 ## License
 

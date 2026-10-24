@@ -2,7 +2,7 @@
 name: browser-demo-videos
 description: Create real browser walkthrough videos with readable captions, target spotlights, a visible cursor, and optional synthetic narration. Use whenever the user asks to record a browser demo, try the bundled sample demo, make a narrated feature demo, show a product flow in a video, or turn an app walkthrough into an MP4, even if they do not name this skill. Operate the actual app rather than simulating its results; inspect, rehearse, capture, and review before delivering.
 license: MIT
-compatibility: Requires a command-capable agent and Node.js >=24 with npm. Skill-owned setup downloads pinned agent-browser 0.39.1 and Chromium, optional private ws 8.22.0 for GPT-Live, and repairs FFmpeg/ffprobe through an existing supported package manager with permission. macOS and Linux; local system speech and missing-key speech fallback require macOS say. Linux supports captions or explicitly approved cloud speech. Downloads require network access; system dependencies may require authorized privileges.
+compatibility: Requires a command-capable agent, Bun >=1.4.4, Git, and Node.js >=24 for upstream launchers only. Bun runs bundled JS and installs private pinned agent-browser 0.39.1 and optional ws 8.22.0; setup downloads Chromium. FFmpeg/ffprobe repair uses an existing supported manager with permission. macOS and Linux; local speech/fallback needs macOS say. Linux supports captions or approved cloud speech. Downloads need network; system repairs may need authorized privileges.
 ---
 
 # Browser demo videos
@@ -14,46 +14,48 @@ Produce a video that proves the requested feature through real browser interacti
 The public source is [santychuy/browser-demo-videos](https://github.com/santychuy/browser-demo-videos). Installation is one command:
 
 ```sh
-npx skills add santychuy/browser-demo-videos
+bun --no-env-file x skills add santychuy/browser-demo-videos
 ```
 
-Initial installation needs Node 24 or newer with npm and Git already available. The skill installer uses Git to obtain the public repository; the user does not need a source checkout. Install a missing prerequisite through an existing approved manager within the user's permissions, not a guessed bootstrap script. Reload/restart the agent if its host needs that to discover the installed skill. Do not require a separate npm package installation or a global `browser-demo` command.
+Initial installation needs Bun 1.4.4 or newer, Node 24 or newer for upstream launchers, and Git already available. Bun is our runtime and package manager; Node is only the upstream skills/agent-browser launcher prerequisite. The skill installer uses Git to obtain the public repository; the user does not need a source checkout. Install missing prerequisites through an existing approved manager within the user's permissions, not a guessed bootstrap script. Reload/restart the agent if its host needs that to discover the installed skill. Do not require a separate companion package installation or a global `browser-demo` command.
 
 Resolve this loaded `SKILL.md` to its actual containing directory and set the shell variable `SKILL_DIR` to that absolute path. Never infer it from the working directory. The installed directory contains `scripts/`, `references/`, and `assets/demo/`; all commands below use these bundled files.
 
 **Before executing any bundled JavaScript**, check both prerequisites using the shell/process tool:
 
 ```sh
+bun --version
 node --version
-npm --version
 ```
 
-If Node is missing or older than 24, install/select Node 24 with npm through the existing approved environment manager (for example, an already available nvm or fnm), then recheck both versions in the command environment you will actually use. The companion cannot bootstrap Node. If no approved manager, network access, or install permission is available, report that exact blocker; do not ask the user to supply information the tools can discover or run the runtime under an unsupported Node version.
+If Bun is missing or older than 1.4.4, install/select Bun through an existing authorized manager before running bundled JavaScript. If Node is missing or older than 24, install/select Node through an existing approved environment manager (for example, an already available nvm or fnm). Recheck both versions in the command environment you will actually use. The companion cannot bootstrap its own Bun runtime. If no approved manager, network access, or install permission is available, report that exact blocker; do not ask the user to supply information the tools can discover or substitute Node for our runtime. Preserve upstream Node shebangs: never force `--bun` on skills or agent-browser.
 
 Run the deep dependency check next:
 
 ```sh
-node "$SKILL_DIR/scripts/cli.mjs" doctor --deep
+bun --no-env-file "$SKILL_DIR/scripts/cli.mjs" doctor --deep
 ```
 
 If it reports missing requirements, perform the applicable repair within granted permissions, then rerun `doctor --deep`:
 
 ```sh
 # Download pinned private runtime and Chromium; no voice keys are needed.
-node "$SKILL_DIR/scripts/cli.mjs" setup --install
+bun --no-env-file "$SKILL_DIR/scripts/cli.mjs" setup --install
 # Only if FFmpeg/ffprobe are missing and OS installation is permitted:
-node "$SKILL_DIR/scripts/cli.mjs" setup --install --install-system
-node "$SKILL_DIR/scripts/cli.mjs" doctor --deep
+bun --no-env-file "$SKILL_DIR/scripts/cli.mjs" setup --install --install-system
+bun --no-env-file "$SKILL_DIR/scripts/cli.mjs" doctor --deep
 ```
 
 Unflagged `setup` only checks. `--install` pins `agent-browser` **0.39.1** in `runtime/` and optional GPT-Live transport `ws` **8.22.0** in a separate `live-runtime/`, under `BROWSER_DEMO_HOME` or `~/.cache/browser-demo-videos`. Live resolves only that exact private transport, never a global/project `ws`; no OpenAI SDK is required. Missing optional Live transport does not block other providers. `--install-system` repairs missing media tools using an existing Homebrew, apt-get, dnf, or pacman; it does not silently invoke `sudo` or grant elevation. In a fresh authorized apt-based container, refresh package indexes with `apt-get update` if necessary before system installation.
+
+Private installs use Bun with `--no-env-file` and exact-version manifests in their dedicated prefixes. Only agent-browser is explicitly trusted to run its required lifecycle script; ws installation ignores lifecycle scripts. Never use an npm fallback or install either dependency into the user's project.
 
 Setup needs **no API keys and no paid call**. Do not load `.env.local`, `.env.private`, or any credential file for `setup`, dependency installation, or `doctor`; do not inspect these files or dump the environment. Keep dependency setup separate from an explicitly approved speech invocation.
 
 Resolve the same pinned browser executable for Linux shared-library repair and later app inspection:
 
 ```sh
-BROWSER="$(node --input-type=module -e 'import { pathToFileURL } from "node:url"; const { resolveAgentBrowser } = await import(pathToFileURL(process.argv[1])); console.log(resolveAgentBrowser() ?? "");' "$SKILL_DIR/scripts/lib/dependencies.mjs")"
+BROWSER="$(bun --no-env-file --input-type=module -e 'import { pathToFileURL } from "node:url"; const { resolveAgentBrowser } = await import(pathToFileURL(process.argv[1])); console.log(resolveAgentBrowser() ?? "");' "$SKILL_DIR/scripts/lib/dependencies.mjs")"
 ```
 
 If a Linux deep check identifies missing Chromium shared libraries, and system dependency installation is explicitly permitted, use the pinned browser's documented repair:
@@ -61,7 +63,7 @@ If a Linux deep check identifies missing Chromium shared libraries, and system d
 ```sh
 # Only for diagnosed missing Linux browser libraries and authorized OS changes:
 "$BROWSER" install --with-deps
-node "$SKILL_DIR/scripts/cli.mjs" doctor --deep
+bun --no-env-file "$SKILL_DIR/scripts/cli.mjs" doctor --deep
 ```
 
 This upstream operation may require privileged package installation; root in an explicitly authorized disposable container is one permitted context. Do not add hidden `sudo`, approve an unexpected elevation prompt, or bypass the permission boundary. If the executable is unresolved, finish pinned runtime installation first. Require a successful deep check before recording; report precise OS, permission, media, or browser-library blockers rather than silently skipping them. First use downloads dependencies and a full render can take time; do not promise a five-second setup or render.
@@ -83,7 +85,7 @@ For “make the sample demo,” use the self-contained synthetic Northstar works
 After setup/deep check, choose a fresh session/output and run:
 
 ```sh
-node "$SKILL_DIR/scripts/cli.mjs" demo --session sample-demo-take-1 --output /absolute/path/sample-demo-take-1
+bun --no-env-file "$SKILL_DIR/scripts/cli.mjs" demo --session sample-demo-take-1 --output /absolute/path/sample-demo-take-1
 ```
 
 `demo` selects portable caption-only narration by default, starts the bundled server on an ephemeral loopback port, patches/validates the plan URL, and executes the real recording pipeline. The server is automatically stopped on success or failure; do not start a separate server or rely on the sample page remaining available afterward. Browser session state follows the normal explicit-session rules. Inspect the actual generated artifacts using the review section below before delivering. This synthetic sample proves the sample flow, not behavior in the user's app.
@@ -91,7 +93,7 @@ node "$SKILL_DIR/scripts/cli.mjs" demo --session sample-demo-take-1 --output /ab
 Optional voice uses the same `--narration PROVIDER`, `--voice VOICE`, and `--allow-cloud` rules as `record`. For example, only after explicit consent and private configuration of the OpenAI key:
 
 ```sh
-node --env-file=/absolute/path/.env.local "$SKILL_DIR/scripts/cli.mjs" demo --session sample-live-take-1 --output /absolute/path/sample-live-take-1 --narration openai-live --allow-cloud
+bun --no-env-file --env-file=/absolute/approved.env "$SKILL_DIR/scripts/cli.mjs" demo --session sample-live-take-1 --output /absolute/path/sample-live-take-1 --narration openai-live --allow-cloud
 ```
 
 Do not make this paid take merely to test installation. Use `--narration system` only for requested local macOS speech. The bundled expanded scripts are retained for optional speech; providers' script limits still apply.
@@ -111,8 +113,8 @@ Replace the example URL with the app URL discovered from the request/project. Us
 Build a concise story: orient, perform the feature, prove the changed state, finish with the result. Captions explain one idea each; optional narration expands on them. Use real element targets, keep captions off the feature, and spotlight only when useful. Full navigation gets a fresh overlay for each scene.
 
 ```sh
-node "$SKILL_DIR/scripts/cli.mjs" validate /absolute/path/demo-plan.json
-node "$SKILL_DIR/scripts/cli.mjs" rehearse /absolute/path/demo-plan.json --session feature-demo --output /absolute/path/rehearsal-take-1 --narration none
+bun --no-env-file "$SKILL_DIR/scripts/cli.mjs" validate /absolute/path/demo-plan.json
+bun --no-env-file "$SKILL_DIR/scripts/cli.mjs" rehearse /absolute/path/demo-plan.json --session feature-demo --output /absolute/path/rehearsal-take-1 --narration none
 ```
 
 Rehearsal executes real actions; it is not a safety sandbox. Use `--narration none` for portable captions or `--narration system` for local macOS speech, even if the plan selects cloud speech. `rehearse` has no `--allow-cloud`: a configured selected cloud key without consent is an error, not a free cloud rehearsal. Review screenshots and the actual outcome. Reset through normal UI before another take if needed; obtain permission before irreversible actions.
@@ -120,8 +122,8 @@ Rehearsal executes real actions; it is not a safety sandbox. Use `--narration no
 For an ad hoc overlay on the same session:
 
 ```sh
-node "$SKILL_DIR/scripts/cli.mjs" scene --session feature-demo --title "A focused view" --text "Only projects needing attention remain." --target '#projects' --placement auto --spotlight --hold 2500
-node "$SKILL_DIR/scripts/cli.mjs" clear --session feature-demo
+bun --no-env-file "$SKILL_DIR/scripts/cli.mjs" scene --session feature-demo --title "A focused view" --text "Only projects needing attention remain." --target '#projects' --placement auto --spotlight --hold 2500
+bun --no-env-file "$SKILL_DIR/scripts/cli.mjs" clear --session feature-demo
 ```
 
 Without `--hold`, a direct scene stays until replaced/cleared. Direct `scene --hold` is limited to 25000 ms by the browser evaluation socket deadline. Plan scenes support holds up to 60000 ms because the runner waits outside page evaluation.
@@ -137,7 +139,7 @@ Without `--hold`, a direct scene stays until replaced/cleared. Direct `scene --h
 
 Honor the requested provider. Never substitute Chat for requested GPT-Live. If speech has no clear provider preference, ask only when a genuine choice remains. `--voice` requires `--narration`; an override replaces the entire narration object so another provider's voice is not reused. Read the [provider and Live details](references/plan-format.md#top-level-fields) for voice IDs, limits, and wire contracts when using speech.
 
-Use only `OPENAI_API_KEY` (Chat and Live), `XAI_API_KEY`, or `GROQ_API_KEY` for the selected provider. Let the user privately configure an inherited environment variable or ignored `.env.local`. Never request a key in chat, read secret file contents, print key values/presence dumps, or put credentials in plans, argv, logs, or artifacts. The runtime does not load env files implicitly; a separate terminal's exports are not automatically inherited. Only for the explicitly approved speech invocation, use `node --env-file=/absolute/path/.env.local ...` if that is the user's chosen file. Omit it when using inherited environment variables; never create/overwrite a private file or load it for setup.
+Use only `OPENAI_API_KEY` (Chat and Live), `XAI_API_KEY`, or `GROQ_API_KEY` for the selected provider. Let the user privately configure an inherited environment variable or ignored `.env.local`. Never request a key in chat, read secret file contents, print key values/presence dumps, or put credentials in plans, argv, logs, or artifacts. Always pass `--no-env-file` to bundled Bun commands so working-directory env files are not loaded implicitly; a separate terminal's exports are not automatically inherited. Only for the explicitly approved speech invocation, add `--env-file=/absolute/approved.env` for the user's chosen private file while retaining `--no-env-file`. Omit `--env-file` when using inherited environment variables; never create/overwrite a private file or load it for setup.
 
 Resolve provider readiness without revealing secrets:
 
@@ -159,9 +161,9 @@ Live prepares one billed session per scene, not reactive commentary. It sends pa
 After successful app rehearsal, keep the app server running and record using the same browser session into a fresh output directory:
 
 ```sh
-node "$SKILL_DIR/scripts/cli.mjs" record /absolute/path/demo-plan.json --session feature-demo --output /absolute/path/demo-take-1
+bun --no-env-file "$SKILL_DIR/scripts/cli.mjs" record /absolute/path/demo-plan.json --session feature-demo --output /absolute/path/demo-take-1
 # Only for separately approved cloud speech with the selected key configured:
-node --env-file=/absolute/path/.env.local "$SKILL_DIR/scripts/cli.mjs" record /absolute/path/demo-plan.json --session feature-demo --output /absolute/path/cloud-take-1 --narration openai --allow-cloud
+bun --no-env-file --env-file=/absolute/approved.env "$SKILL_DIR/scripts/cli.mjs" record /absolute/path/demo-plan.json --session feature-demo --output /absolute/path/cloud-take-1 --narration openai --allow-cloud
 ```
 
 Capture includes the visible cursor, real UI, and inert overlay. Do not open another session for recording. Browser session state remains available for inspection afterward; the bundled sample server, unlike a user-managed app server, is auto-cleaned.
