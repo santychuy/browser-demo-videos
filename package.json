@@ -13,7 +13,9 @@
   "bugs": {
     "url": "https://github.com/santychuy/browser-demo-videos/issues"
   },
+  "packageManager": "bun@1.4.4",
   "engines": {
+    "bun": ">=1.4.4",
     "node": ">=24"
   },
   "bin": {
@@ -31,13 +33,13 @@
     "assets/demo-preview.gif"
   ],
   "scripts": {
-    "check": "node scripts/check.mjs",
-    "test": "node --test",
-    "format": "prettier --write --ignore-path .gitignore .",
-    "format:check": "prettier --check --ignore-path .gitignore .",
+    "check": "bun --no-env-file scripts/check.mjs",
+    "test": "bun --no-env-file test",
+    "format": "bun --no-env-file node_modules/prettier/bin/prettier.cjs --write --ignore-path .gitignore .",
+    "format:check": "bun --no-env-file node_modules/prettier/bin/prettier.cjs --check --ignore-path .gitignore .",
     "package:skill": "python3 scripts/package-skill.py",
-    "demo:serve": "node skills/browser-demo-videos/assets/demo/server.mjs",
-    "demo": "node skills/browser-demo-videos/scripts/cli.mjs demo --session browser-demo-example --output demo-output"
+    "demo:serve": "bun --no-env-file skills/browser-demo-videos/assets/demo/server.mjs",
+    "demo": "bun --no-env-file skills/browser-demo-videos/scripts/cli.mjs demo --session browser-demo-example --output demo-output"
   },
   "devDependencies": {
     "prettier": "3.6.2"

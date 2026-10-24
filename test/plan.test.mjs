@@ -404,6 +404,7 @@ test("record and rehearsal narration overrides replace provider voices and requi
           execute(
             process.execPath,
             [
+              "--no-env-file",
               cli,
               command,
               file,
@@ -417,6 +418,7 @@ test("record and rehearsal narration overrides replace provider voices and requi
             ],
             {
               env: {
+                PATH: process.env.PATH,
                 OPENAI_API_KEY: "fake-openai-no-request",
                 XAI_API_KEY: "fake-xai-no-request",
                 GROQ_API_KEY: "fake-groq-no-request",
@@ -476,6 +478,7 @@ test("CLI voice overrides reject unsafe combinations and revalidate the selected
       ]) {
         await assert.rejects(
           execute(process.execPath, [
+            "--no-env-file",
             cli,
             command,
             file,

@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+- Use Bun 1.4.4+ for the bundled CLI, dependency installation, project tasks, tests, and CI; retain Node 24+ for upstream launchers.
+- Replace the npm lockfile with `bun.lock`; disable automatic `.env` loading while preserving explicitly approved narration credential files.
+- Check the actual upstream Node executable instead of Bun's emulated Node version, and scope dependency lifecycle trust to the pinned browser package.
+- Keep GitHub release titles identical to their tags and simplify the README to list the tools actually used.
+
 ## 0.1.0 — First public release
 
 ### Skill and distribution

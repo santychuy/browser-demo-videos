@@ -1,8 +1,13 @@
-#!/usr/bin/env node
+#!/usr/bin/env -S bun --no-env-file
 import { resolve } from "node:path";
 import { startDemoServer } from "../assets/demo/server.mjs";
 import { createBrowser } from "./lib/browser.mjs";
-import { doctor, sanitizeDiagnostic, setup } from "./lib/dependencies.mjs";
+import {
+  doctor,
+  runtimePrerequisites,
+  sanitizeDiagnostic,
+  setup,
+} from "./lib/dependencies.mjs";
 import { clearScript, sceneScript } from "./lib/overlay.mjs";
 import { loadPlan, validatePlan } from "./lib/plan.mjs";
 import { runPlan } from "./lib/run.mjs";
@@ -27,7 +32,8 @@ Usage:
   browser-demo --help
   browser-demo --version
 
-Node 24+ is required. setup checks only unless installation is explicitly requested.
+Bun 1.4.4+ runs this CLI; upstream agent-browser and skills launchers need Node 24+ on PATH.
+setup checks only unless installation is explicitly requested.
 setup --install also installs the optional private pinned GPT-Live WebSocket transport.
 All browser operations use your explicit session; no authenticated profile is imported.
 scene --hold accepts 0–25000ms. Longer scenes belong in a plan.
@@ -38,7 +44,7 @@ openai-live uses gpt-live-1 billed sessions captured per scene before browser re
 Live capture sends paced silence (no microphone) and waits for final session usage on close.
 An absent key falls back to macOS Samantha; errors from configured keys never do.
 Use --narration system for predictable local-only rehearsal (macOS speech).
-The skill includes its runtime: invoke this file with node after copying the skill.
+The skill includes its runtime: invoke this file with bun --no-env-file after copying the skill.
 `;
 
 const commands = {
@@ -181,10 +187,10 @@ async function main() {
     if (!report.ok) process.exitCode = 1;
     return;
   }
-  if (Number(process.versions.node.split(".")[0]) < 24)
-    throw new Error(
-      "Node 24 or newer is required; install a supported Node runtime, then retry.",
-    );
+  const failedPrerequisite = (await runtimePrerequisites()).find(
+    (check) => !check.ok,
+  );
+  if (failedPrerequisite) throw new Error(failedPrerequisite.detail);
   if (command === "validate") {
     emit({ ok: true, plan: await loadPlan(positional[0]) });
     return;

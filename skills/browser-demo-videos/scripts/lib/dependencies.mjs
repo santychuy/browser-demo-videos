@@ -1,11 +1,18 @@
 import { spawn, spawnSync } from "node:child_process";
-import { accessSync, constants, mkdirSync, readFileSync } from "node:fs";
+import {
+  accessSync,
+  constants,
+  mkdirSync,
+  readFileSync,
+  writeFileSync,
+} from "node:fs";
 import { createRequire } from "node:module";
 import { homedir } from "node:os";
 import { delimiter, dirname, isAbsolute, join, resolve } from "node:path";
 
 export const AGENT_BROWSER_VERSION = "0.39.1";
 export const LIVE_WS_VERSION = "8.22.0";
+const MIN_BUN_VERSION = "1.4.4";
 
 const require = createRequire(import.meta.url);
 
@@ -188,13 +195,57 @@ export function browserEnvironment() {
   };
 }
 
+function bunRuntimeCheck() {
+  const version = process.versions.bun;
+  const [major = 0, minor = 0, patch = 0] = (version ?? "")
+    .split(".")
+    .map(Number);
+  return {
+    name: "bun",
+    ok:
+      Boolean(version) &&
+      (major > 1 ||
+        (major === 1 && (minor > 4 || (minor === 4 && patch >= 4)))),
+    detail: `Bun ${version ?? "is not running"}; run this CLI with Bun ${MIN_BUN_VERSION} or newer and --no-env-file.`,
+  };
+}
+
+async function nodeRuntimeCheck() {
+  const node = resolveTool("node");
+  if (!node) {
+    return {
+      name: "node",
+      ok: false,
+      detail:
+        "Node not found on PATH; Node 24 or newer is required by upstream agent-browser and skills launchers.",
+    };
+  }
+  try {
+    const { stdout } = await runProcess(node, ["--version"], {
+      timeoutMs: 10000,
+    });
+    const version = stdout.trim();
+    const match = /^v(\d+)\.\d+\.\d+(?:-[\w.-]+)?$/.exec(version);
+    return {
+      name: "node",
+      ok: Boolean(match) && Number(match[1]) >= 24,
+      detail: `${node}: Node ${version}; version 24 or newer is required by upstream agent-browser and skills launchers.`,
+    };
+  } catch (error) {
+    return {
+      name: "node",
+      ok: false,
+      detail: sanitizeDiagnostic(error.message),
+    };
+  }
+}
+
+export async function runtimePrerequisites() {
+  return [bunRuntimeCheck(), await nodeRuntimeCheck()];
+}
+
 export async function doctor({ deep = false } = {}) {
-  const checks = [];
-  checks.push({
-    name: "node",
-    ok: Number(process.versions.node.split(".")[0]) >= 24,
-    detail: `Node ${process.versions.node}; version 24 or newer is required.`,
-  });
+  const checks = await runtimePrerequisites();
   const browser = resolveAgentBrowser();
   checks.push({
     name: "agent-browser",
@@ -343,31 +394,33 @@ async function installSystemMedia() {
 }
 
 export async function setup({ install = false, installSystem = false } = {}) {
-  if (Number(process.versions.node.split(".")[0]) < 24) return doctor();
+  const prerequisites = await runtimePrerequisites();
+  if (prerequisites.some((check) => !check.ok))
+    return { ok: false, checks: prerequisites };
   if (installSystem && (!resolveTool("ffmpeg") || !resolveTool("ffprobe")))
     await installSystemMedia();
   if (install) {
     let browser = resolveAgentBrowser();
     if (!browser) {
-      const npm = resolveTool("npm");
-      if (!npm)
-        throw new Error(
-          "npm is required to install the pinned private agent-browser runtime. Install Node 24 with npm, then retry setup --install.",
-        );
-      mkdirSync(privatePrefix(), { recursive: true });
-      await runProcess(
-        npm,
-        [
-          "install",
-          "--prefix",
-          privatePrefix(),
-          "--no-save",
-          "--no-audit",
-          "--no-fund",
-          `agent-browser@${AGENT_BROWSER_VERSION}`,
-        ],
-        { timeoutMs: 600000 },
+      const prefix = privatePrefix();
+      mkdirSync(prefix, { recursive: true });
+      writeFileSync(
+        join(prefix, "package.json"),
+        `${JSON.stringify(
+          {
+            name: "browser-demo-private-browser",
+            private: true,
+            dependencies: { "agent-browser": AGENT_BROWSER_VERSION },
+            trustedDependencies: ["agent-browser"],
+          },
+          null,
+          2,
+        )}\n`,
       );
+      await runProcess(process.execPath, ["--no-env-file", "install"], {
+        cwd: prefix,
+        timeoutMs: 600000,
+      });
       browser = resolveAgentBrowser();
       if (!browser)
         throw new Error(
@@ -380,26 +433,25 @@ export async function setup({ install = false, installSystem = false } = {}) {
       env: browserEnvironment(),
     });
     if (!resolveLiveWebSocket()) {
-      const npm = resolveTool("npm");
-      if (!npm)
-        throw new Error(
-          "npm is required to install the optional pinned GPT-Live transport. Install Node 24 with npm, then retry setup --install.",
-        );
-      mkdirSync(privateLivePrefix(), { recursive: true });
+      const prefix = privateLivePrefix();
+      mkdirSync(prefix, { recursive: true });
+      writeFileSync(
+        join(prefix, "package.json"),
+        `${JSON.stringify(
+          {
+            name: "browser-demo-private-live",
+            private: true,
+            dependencies: { ws: LIVE_WS_VERSION },
+            trustedDependencies: [],
+          },
+          null,
+          2,
+        )}\n`,
+      );
       await runProcess(
-        npm,
-        [
-          "install",
-          "--prefix",
-          privateLivePrefix(),
-          "--no-save",
-          "--no-audit",
-          "--no-fund",
-          "--ignore-scripts",
-          "--omit=optional",
-          `ws@${LIVE_WS_VERSION}`,
-        ],
-        { timeoutMs: 600000 },
+        process.execPath,
+        ["--no-env-file", "install", "--ignore-scripts", "--omit=optional"],
+        { cwd: prefix, timeoutMs: 600000 },
       );
       if (!resolveLiveWebSocket())
         throw new Error(

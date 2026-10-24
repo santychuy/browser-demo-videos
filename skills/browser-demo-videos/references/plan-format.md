@@ -1,9 +1,9 @@
 # Demo plan format (version 1)
 
-A plan is UTF-8 JSON, not JavaScript. First follow [the installed skill's Node/npm and dependency bootstrap](../SKILL.md#1-locate-and-bootstrap-the-installed-skill): check Node >=24 and npm before running bundled JavaScript, repair within permissions, and require `doctor --deep` before recording. Setup needs no API keys; never load private environment files for dependency installation. Validate a custom plan before browser actions:
+A plan is UTF-8 JSON, not JavaScript. First follow [the installed skill's Bun and dependency bootstrap](../SKILL.md#1-locate-and-bootstrap-the-installed-skill): check Bun >=1.4.4 and external Node >=24 (upstream launchers only) before running bundled JavaScript with Bun, repair within permissions, and require `doctor --deep` before recording. Setup needs no API keys; never load private environment files for dependency installation. Validate a custom plan before browser actions:
 
 ```sh
-node "$SKILL_DIR/scripts/cli.mjs" validate /absolute/path/plan.json
+bun --no-env-file "$SKILL_DIR/scripts/cli.mjs" validate /absolute/path/plan.json
 ```
 
 `SKILL_DIR` is the absolute directory containing the loaded `SKILL.md`. All field names are exact. Unknown fields, unknown action types, incorrect types, duplicate scene IDs, and arbitrary `eval`/shell actions are rejected. CSS selectors must identify real page elements; this schema does not accept snapshot refs as a substitute for stable selectors.
@@ -63,7 +63,7 @@ The installed canonical [assets/demo/walkthrough.json](../assets/demo/walkthroug
 After setup, choose a fresh explicit session and absent/empty output directory:
 
 ```sh
-node "$SKILL_DIR/scripts/cli.mjs" demo --session sample-demo-take-1 --output /absolute/path/sample-demo-take-1
+bun --no-env-file "$SKILL_DIR/scripts/cli.mjs" demo --session sample-demo-take-1 --output /absolute/path/sample-demo-take-1
 ```
 
 `demo` starts the loopback-only sample server on an ephemeral port, patches/validates the plan URL, and executes the ordinary recording pipeline. It always stops that server afterward, including failures; browser session handling remains explicit. It defaults to `none`, without a key or paid request. Optional `--narration PROVIDER`, `--voice VOICE`, and `--allow-cloud` follow the same provider/permission rules as `record`. Inspect actual output before claiming success. The sample demonstrates synthetic sample data, not the user's app.
@@ -102,9 +102,9 @@ A user request for GPT-Live must select `openai-live`, not `openai`, Realtime, o
 
 The CLI writes a JSON warning on stderr for missing-key fallback. `manifest.narration` reports safe effective configuration: `requestedProvider`, optional `requestedVoice`, effective `provider` / `voice` / `model` where applicable, and `fallbackReason: "missing-api-key"` for fallback only. It never contains keys or an environment snapshot.
 
-Configure keys privately in the inherited environment or an ignored `.env.local`; never paste them into chat, plans, argv, logs, or artifacts. Never read secret files, print secret values or environment/presence dumps, or load `.env.local`, `.env.private`, or another credential file for `setup`, `doctor`, or dependency installation. Those operations need no keys or paid calls. Environment files are not loaded implicitly, and exports in another terminal are not automatically inherited. Only for an explicitly approved speech invocation, use `node --env-file=/absolute/path/.env.local "$SKILL_DIR/scripts/cli.mjs" ...` when that is the user's chosen file. The user can privately configure it and say which provider is ready; do not request its contents or overwrite it.
+Configure keys privately in the inherited environment or an ignored `.env.local`; never paste them into chat, plans, argv, logs, or artifacts. Never read secret files, print secret values or environment/presence dumps, or load `.env.local`, `.env.private`, or another credential file for `setup`, `doctor`, or dependency installation. Those operations need no keys or paid calls. Bundled commands use `--no-env-file` to disable implicit env-file loading, and exports in another terminal are not automatically inherited. Only for an explicitly approved speech invocation, use `bun --no-env-file --env-file=/absolute/approved.env "$SKILL_DIR/scripts/cli.mjs" ...` for the user's chosen file. Both flags are required so only the explicit file loads. The user can privately configure it and say which provider is ready; do not request its contents or overwrite it.
 
-Both OpenAI providers use the same private `OPENAI_API_KEY`. Live additionally needs pinned `ws` 8.22.0, installed by `setup --install` into `${BROWSER_DEMO_HOME || ~/.cache/browser-demo-videos}/live-runtime/`, separate from the browser's `runtime/` prefix. It is resolved only from that private location; no OpenAI SDK, global `ws`, or project npm dependency is required. Doctor reports missing Live transport as optional for other providers.
+Both OpenAI providers use the same private `OPENAI_API_KEY`. Live additionally needs pinned `ws` 8.22.0, installed by Bun through `setup --install` into `${BROWSER_DEMO_HOME || ~/.cache/browser-demo-videos}/live-runtime/`, separate from the browser's `runtime/` prefix. Private installs use exact-version manifests and `--no-env-file`: only agent-browser's required lifecycle script is explicitly trusted; ws scripts are ignored. Live resolves only that private transport; no OpenAI SDK, global `ws`, or project dependency is required. Doctor reports missing Live transport as optional for other providers.
 
 The separate `openai` provider uses a fixed natural explanatory reading prompt and requires a completed Chat response with a transcript whose normalized Unicode word/number sequence matches the script, ignoring punctuation, case, and spacing. Reordered, added, or missing words fail; punctuation differences pass. Numerals versus spelled-out numbers can fail, so write spoken numbers/currency as words. Both OpenAI providers use this strict whole-transcript guard; it does not guarantee verbatim acoustic rendering or voice quality. Accepted transcript files support manual review. This [Audio Chat Completions](https://developers.openai.com/api/docs/guides/audio-chat-completions) design is not an assertion of OpenAI's official migration recommendation for [Speech models shutting down January 6, 2027](https://developers.openai.com/api/docs/guides/text-to-speech). See also [xAI TTS](https://docs.x.ai/developers/model-capabilities/audio/text-to-speech) and [Groq TTS](https://console.groq.com/docs/text-to-speech). Wire contracts are not live-provider or listening proof.
 
@@ -176,10 +176,10 @@ Actions run first, then scene readiness, then overlay presentation and its scree
 ## Commands and artifacts
 
 ```sh
-node "$SKILL_DIR/scripts/cli.mjs" demo --session sample-demo-take-1 --output /absolute/path/sample-demo-take-1
-node "$SKILL_DIR/scripts/cli.mjs" validate /absolute/path/plan.json
-node "$SKILL_DIR/scripts/cli.mjs" rehearse /absolute/path/plan.json --session feature-demo --output /absolute/path/rehearsal-take-1 --narration none
-node "$SKILL_DIR/scripts/cli.mjs" record /absolute/path/plan.json --session feature-demo --output /absolute/path/take-1
+bun --no-env-file "$SKILL_DIR/scripts/cli.mjs" demo --session sample-demo-take-1 --output /absolute/path/sample-demo-take-1
+bun --no-env-file "$SKILL_DIR/scripts/cli.mjs" validate /absolute/path/plan.json
+bun --no-env-file "$SKILL_DIR/scripts/cli.mjs" rehearse /absolute/path/plan.json --session feature-demo --output /absolute/path/rehearsal-take-1 --narration none
+bun --no-env-file "$SKILL_DIR/scripts/cli.mjs" record /absolute/path/plan.json --session feature-demo --output /absolute/path/take-1
 ```
 
 Every browser command requires an explicit `--session`; keep one name throughout inspection, rehearsal, capture, and review of a take. Rehearsal still performs real actions. `demo`, `record`, and `rehearse` accept `--narration none|system|openai|openai-live|xai|groq` and optional `--voice VOICE` (only with `--narration`). Overrides replace the complete narration object and are revalidated; another provider's voice is never inherited. For local cloud-story rehearsal, select `--narration system` on macOS or `--narration none` for captions. `rehearse` offers no `--allow-cloud`; missing-key fallback can run locally, but a configured cloud key without consent fails. Do not pay merely to explore a script or check setup.
@@ -187,9 +187,9 @@ Every browser command requires an explicit `--session`; keep one name throughout
 For separately approved OpenAI Chat, GPT-Live, and xAI takes, after the user privately configures the corresponding keys:
 
 ```sh
-node --env-file=/absolute/path/.env.local "$SKILL_DIR/scripts/cli.mjs" record /absolute/path/plan.json --session openai-live-demo --output /absolute/path/openai-live-take-1 --narration openai-live --allow-cloud
-node --env-file=/absolute/path/.env.local "$SKILL_DIR/scripts/cli.mjs" record /absolute/path/plan.json --session feature-demo --output /absolute/path/openai-take-1 --narration openai --allow-cloud
-node --env-file=/absolute/path/.env.local "$SKILL_DIR/scripts/cli.mjs" record /absolute/path/plan.json --session feature-demo --output /absolute/path/xai-take-1 --narration xai --allow-cloud
+bun --no-env-file --env-file=/absolute/approved.env "$SKILL_DIR/scripts/cli.mjs" record /absolute/path/plan.json --session openai-live-demo --output /absolute/path/openai-live-take-1 --narration openai-live --allow-cloud
+bun --no-env-file --env-file=/absolute/approved.env "$SKILL_DIR/scripts/cli.mjs" record /absolute/path/plan.json --session feature-demo --output /absolute/path/openai-take-1 --narration openai --allow-cloud
+bun --no-env-file --env-file=/absolute/approved.env "$SKILL_DIR/scripts/cli.mjs" record /absolute/path/plan.json --session feature-demo --output /absolute/path/xai-take-1 --narration xai --allow-cloud
 ```
 
 For a separately approved voiced sample, replace `record /absolute/path/plan.json` with `demo` and use another fresh session/output. The bundled plan is `"$SKILL_DIR/assets/demo/walkthrough.json"`; `demo` owns its ephemeral server and URL patching, so recording that source directly is not the self-contained sample path. Omit `--env-file` when using inherited environment variables. An absent selected key triggers local macOS fallback without needing `--allow-cloud`, but that fallback does not satisfy an explicitly requested real Live take. Use fresh output directories for repeated takes; never delete existing artifacts to make room.
