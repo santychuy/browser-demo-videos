@@ -37,6 +37,7 @@ The bundled Northstar app uses synthetic project data. Its walkthrough shows the
 First use checks the pinned browser tooling, Chromium, and FFmpeg/ffprobe, and downloads missing dependencies when permitted. Bun, the upstream Node.js launcher prerequisite, and Git must already be available for the initial installation command.
 
 - **Actual interactions:** one explicit `agent-browser` session operates the page. No application-source changes or fabricated results.
+- **Smooth presentation by default:** captions and spotlights ease in and out over 250 ms, with an 8 px caption slide. Every demo, recording, rehearsal, and ad hoc scene uses these transitions automatically—no opt-in flag or plan setting. Reduced-motion preferences skip them; highlights stay locked to their actual targets.
 - **Reviewable output:** final and raw MP4s, scene screenshots, timeline, and complete-run manifest. The agent retains the input plan and reports observed review, not just command success.
 - **macOS and Linux:** captions work without a voice key. Local speech uses macOS `say` only; Linux has no bundled offline speech engine. Other operating systems are not a supported portability claim.
 - **Optional speech:** macOS system speech, OpenAI Chat, actual OpenAI GPT-Live, xAI Grok, and the separate vendor Groq Preview. Cloud speech requires the selected provider's private key, explicit consent to send the script, and acceptance of provider charges.

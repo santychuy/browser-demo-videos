@@ -128,6 +128,8 @@ bun --no-env-file "$SKILL_DIR/scripts/cli.mjs" clear --session feature-demo
 
 Without `--hold`, a direct scene stays until replaced/cleared. Direct `scene --hold` is limited to 25000 ms by the browser evaluation socket deadline. Plan scenes support holds up to 60000 ms because the runner waits outside page evaluation.
 
+Captions and spotlights automatically use 250 ms ease-in-out entrances/exits, with an 8 px caption slide, for `demo`, `record`, `rehearse`, and direct `scene` commands. This is the default presentation: no opt-in flag or plan setting is needed; do not add custom page animation code to enable it. Scene acknowledgement, screenshots, and reading holds follow the entrance; clear/hold completion waits for the exit. Recording includes the final exit. Review both transition boundaries in the video, not just settled screenshots. Honor the browser's reduced-motion preference (transitions are skipped); target tracking and invalid-target/navigation cleanup remain immediate.
+
 ## 3. Choose speech deliberately
 
 - `none`: portable captions; no speech request. Default unless speech was requested.

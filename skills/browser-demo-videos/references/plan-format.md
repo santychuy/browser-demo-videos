@@ -173,6 +173,8 @@ At least one of `selector`, `text`, or `url` is required; when multiple are supp
 
 Actions run first, then scene readiness, then overlay presentation and its screenshot/hold. Full navigation removes the old document's overlay; the new scene installs a fresh one after readiness. Use readiness instead of sleep to prove an application transition; a scene's hold exists for human reading, not to hide loading failures.
 
+Presentation uses fixed 250 ms ease-in-out fades for the caption/spotlight plus an 8 px caption slide. The runner finishes the outgoing exit before actions, waits for the incoming entrance before screenshots and the reading/narration hold, and records the final exit before stopping capture. These transitions add time around—not inside—the scene hold. A browser with `prefers-reduced-motion: reduce` skips them. Spotlight geometry follows the real target without interpolation; invalid targets and navigation clear immediately.
+
 ## Commands and artifacts
 
 ```sh

@@ -55,7 +55,7 @@ export function sceneScript(options = {}) {
 }
 
 export function clearScript() {
-  return `(() => { const host = document.getElementById(${JSON.stringify(HOST_ID)}); if (!host) return {cleared: false}; const cleanup = host[${JSON.stringify(CLEANUP_KEY)}]; if (typeof cleanup !== 'function') throw new Error('Overlay host ID is occupied by an application element.'); cleanup('cleared'); return {cleared: true}; })()`;
+  return `(async () => { const host = document.getElementById(${JSON.stringify(HOST_ID)}); if (!host) return {cleared: false}; const cleanup = host[${JSON.stringify(CLEANUP_KEY)}]; if (typeof cleanup !== 'function') throw new Error('Overlay host ID is occupied by an application element.'); await cleanup('cleared'); return {cleared: true}; })()`;
 }
 
 async function installScene(options, hostId, cleanupKey) {
@@ -64,7 +64,7 @@ async function installScene(options, hostId, cleanupKey) {
     if (typeof previous[cleanupKey] !== "function") {
       throw new Error("Overlay host ID is occupied by an application element.");
     }
-    previous[cleanupKey]("replaced");
+    await previous[cleanupKey]("replaced");
   }
 
   const host = document.createElement("div");
@@ -92,6 +92,7 @@ async function installScene(options, hostId, cleanupKey) {
   style.textContent = `
     :host { color-scheme: dark; }
     *, *::before, *::after { box-sizing: border-box; pointer-events: none !important; }
+    .presentation { position: absolute; inset: 0; }
     .shade { position: absolute; background: rgba(5, 9, 17, .60); }
     .focus { position: absolute; border: 2px solid rgba(130, 211, 221, .95);
       border-radius: 11px; box-shadow: 0 0 0 1px rgba(5, 9, 17, .40); }
@@ -113,17 +114,20 @@ async function installScene(options, hostId, cleanupKey) {
     @media (prefers-reduced-transparency: reduce) { .card { background: #0f1725; } }
   `;
   shadow.append(style);
+  const presentation = document.createElement("div");
+  presentation.className = "presentation";
+  shadow.append(presentation);
   const shades = Array.from({ length: 4 }, () => {
     const shade = document.createElement("div");
     shade.className = "shade";
     shade.hidden = true;
-    shadow.append(shade);
+    presentation.append(shade);
     return shade;
   });
   const focus = document.createElement("div");
   focus.className = "focus";
   focus.hidden = true;
-  shadow.append(focus);
+  presentation.append(focus);
   const card = document.createElement("section");
   card.className = "card";
   const accent = document.createElement("div");
@@ -137,7 +141,7 @@ async function installScene(options, hostId, cleanupKey) {
   const text = document.createElement("p");
   text.textContent = options.text;
   card.append(text);
-  shadow.append(card);
+  presentation.append(card);
 
   let stopped = false;
   let frame = null;
@@ -148,6 +152,8 @@ async function installScene(options, hostId, cleanupKey) {
   let resizeObserver = null;
   let element = null;
   let result = null;
+  let animations = [];
+  let dismissal = null;
   const viewport = window.visualViewport;
   const rect = (value) => ({
     x: value.x,
@@ -162,8 +168,34 @@ async function installScene(options, hostId, cleanupKey) {
     a.y < b.y + b.height &&
     a.y + a.height > b.y;
 
+  function transition(entering) {
+    const opacity = entering ? 0 : getComputedStyle(presentation).opacity;
+    const transform = entering
+      ? "translateY(8px)"
+      : getComputedStyle(card).transform;
+    animations.forEach((animation) => animation.cancel());
+    animations = [];
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches)
+      return Promise.resolve();
+    const timing = { duration: 250, easing: "ease-in-out", fill: "both" };
+    animations = [
+      presentation.animate(
+        [{ opacity }, { opacity: entering ? 1 : 0 }],
+        timing,
+      ),
+      card.animate(
+        [{ transform }, { transform: entering ? "none" : "translateY(8px)" }],
+        timing,
+      ),
+    ];
+    // Cancellation is expected when a scene is cleared during its entrance.
+    return Promise.all(
+      animations.map((animation) => animation.finished.catch(() => {})),
+    );
+  }
+
   function cleanup(reason = "cleared") {
-    if (stopped) return;
+    if (stopped) return dismissal;
     stopped = true;
     if (frame !== null) cancelAnimationFrame(frame);
     clearTimeout(poll);
@@ -175,12 +207,22 @@ async function installScene(options, hostId, cleanupKey) {
     window.removeEventListener("pagehide", onPageHide);
     viewport?.removeEventListener("resize", schedule);
     viewport?.removeEventListener("scroll", schedule);
-    host.remove();
+    const animated = ["cleared", "replaced", "hold completed"].includes(reason);
+    dismissal = (animated ? transition(false) : Promise.resolve()).then(() => {
+      animations.forEach((animation) => animation.cancel());
+      host.remove();
+    });
+    // Invalid targets/navigation must not leave a stale spotlight on screen.
+    if (!animated) {
+      animations.forEach((animation) => animation.cancel());
+      host.remove();
+    }
     if (rejectHold) {
       const reject = rejectHold;
       rejectHold = null;
       reject(new Error(`Scene ended before its hold completed: ${reason}.`));
     }
+    return dismissal;
   }
   host[cleanupKey] = cleanup;
   function onPageHide() {
@@ -487,14 +529,16 @@ async function installScene(options, hostId, cleanupKey) {
     viewport?.addEventListener("resize", schedule, { passive: true });
     viewport?.addEventListener("scroll", schedule, { passive: true });
     poll = setTimeout(sample, 100);
+    await transition(true);
+    if (stopped) throw new Error("Scene ended before its entrance completed.");
+    layout();
     if (options.holdMs !== undefined) {
       await new Promise((resolve, reject) => {
         rejectHold = reject;
         hold = setTimeout(() => {
           rejectHold = null;
           hold = null;
-          cleanup("hold completed");
-          resolve();
+          cleanup("hold completed").then(resolve, reject);
         }, options.holdMs);
       });
     }

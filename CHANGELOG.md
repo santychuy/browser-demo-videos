@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Ease captions and spotlights in/out over 250 ms, with a subtle caption slide and reduced-motion support; wait for entrance before screenshots/reading time and capture the final exit before stopping recording.
 - Use Bun 1.4.4+ for the bundled CLI, dependency installation, project tasks, tests, and CI; retain Node 24+ for upstream launchers.
 - Replace the npm lockfile with `bun.lock`; disable automatic `.env` loading while preserving explicitly approved narration credential files.
 - Check the actual upstream Node executable instead of Bun's emulated Node version, and scope dependency lifecycle trust to the pinned browser package.

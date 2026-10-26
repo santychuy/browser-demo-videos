@@ -322,6 +322,15 @@ export async function runPlan(
       if (error.code) failure.code = error.code;
     } finally {
       const cleanupErrors = [];
+      try {
+        await browser.evaluate(clearScript());
+      } catch (error) {
+        cleanupErrors.push(
+          new Error(`Overlay cleanup failed: ${error.message}`, {
+            cause: error,
+          }),
+        );
+      }
       if (record && recorderMayBeRunning) {
         brackets.stopSent = performance.now();
         try {
@@ -334,15 +343,6 @@ export async function runPlan(
           );
         }
         brackets.stopAcknowledged = performance.now();
-      }
-      try {
-        await browser.evaluate(clearScript());
-      } catch (error) {
-        cleanupErrors.push(
-          new Error(`Overlay cleanup failed: ${error.message}`, {
-            cause: error,
-          }),
-        );
       }
       if (cleanupErrors.length) {
         const errors = failure ? [failure, ...cleanupErrors] : cleanupErrors;

@@ -103,6 +103,8 @@ The CLI returns JSON for operations (help is text), rejects unknown options/fiel
 
 An ad hoc `scene` overlays a page already open in that session. Plain-text caption cards live in one inert Shadow DOM host, do not intercept clicks, and track their actual targets across movement. A missing target fails; no target means a bottom caption. Navigation or target removal clears stale presentation. `clear` removes the current overlay. Without `--hold`, a scene persists until replaced or cleared. Direct holds are limited to 25000 ms because browser evaluation has a deadline; plan holds support up to 60000 ms by waiting outside page evaluation.
 
+Captions and spotlights fade in and out over **250 ms with ease-in-out**; captions also slide vertically by 8 px. Replacing a direct scene finishes the old exit before the new entrance. `scene` acknowledges a fully entered caption; screenshots and reading/narration holds start afterward. `clear` and timed holds finish only after the exit removes the overlay, and recordings include the final exit before capture stops. The browser's `prefers-reduced-motion: reduce` setting skips these transitions. Target geometry remains locked to the actual element while scrolling or resizing; invalid targets and page navigation still clear immediately rather than animating a stale highlight.
+
 ## Optional narration
 
 | Provider      | Default voice | Actual API / private key                                                                |
